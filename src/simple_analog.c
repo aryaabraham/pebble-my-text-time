@@ -11,7 +11,7 @@ static const char *s_time_a_buffer = NULL, *s_time_b_buffer = NULL, *s_time_c_bu
 
 /* A function that prints given number in words */
 /* The first string is not used, it is to make array indexing simple */
-static const char *single_digits[] = { "zero", "one", "two", "three", "four",
+static const char *single_digits[] = { "o'clock", "one", "two", "three", "four",
                          "five", "six", "seven", "eight", "nine"};
 /* The first string is not used, it is to make array indexing simple */
 static const char *two_digits_a[] = {"ten", "eleven", "twelve", "thir", "four",
