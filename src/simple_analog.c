@@ -69,7 +69,7 @@ static void time_update_proc(Layer *layer, GContext *ctx) {
   APP_LOG(APP_LOG_LEVEL_INFO, "%s %s", s_time_b_buffer, s_time_c_buffer);
 }
 
-static void handle_second_tick(struct tm *tick_time, TimeUnits units_changed) {
+static void handle_minute_tick(struct tm *tick_time, TimeUnits units_changed) {
   layer_mark_dirty(window_get_root_layer(window));
 }
 
@@ -130,7 +130,7 @@ static void init() {
   });
   window_stack_push(window, true);
 
-  tick_timer_service_subscribe(MINUTE_UNIT, handle_second_tick);
+  tick_timer_service_subscribe(MINUTE_UNIT, handle_minute_tick);
 }
 
 static void deinit() {
