@@ -76,7 +76,7 @@ static void handle_second_tick(struct tm *tick_time, TimeUnits units_changed) {
 static void window_load(Window *window) {
   Layer *window_layer = window_get_root_layer(window);
   GRect bounds = layer_get_bounds(window_layer);
-  APP_LOG(APP_LOG_LEVEL_INFO, "%d,%d,%d,%d", bounds.origin.x, bounds.origin.y, bounds.size.w, bounds.size.h);
+  //APP_LOG(APP_LOG_LEVEL_INFO, "%d,%d,%d,%d", bounds.origin.x, bounds.origin.y, bounds.size.w, bounds.size.h);
   
   s_simple_bg_layer = layer_create(bounds);
   layer_set_update_proc(s_simple_bg_layer, bg_update_proc);
@@ -122,7 +122,7 @@ static void window_unload(Window *window) {
 }
 
 static void init() {
-  APP_LOG(APP_LOG_LEVEL_INFO, "init");
+  //APP_LOG(APP_LOG_LEVEL_INFO, "init");
   window = window_create();
   window_set_window_handlers(window, (WindowHandlers) {
     .load = window_load,
@@ -130,7 +130,7 @@ static void init() {
   });
   window_stack_push(window, true);
 
-  tick_timer_service_subscribe(SECOND_UNIT, handle_second_tick);
+  tick_timer_service_subscribe(MINUTE_UNIT, handle_second_tick);
 }
 
 static void deinit() {
@@ -139,7 +139,7 @@ static void deinit() {
 }
 
 int main() {
-  APP_LOG(APP_LOG_LEVEL_INFO, "main");
+  //APP_LOG(APP_LOG_LEVEL_INFO, "main");
   init();
   app_event_loop();
   deinit();
