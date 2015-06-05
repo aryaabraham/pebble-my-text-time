@@ -11,7 +11,7 @@ static const char *s_time_a_buffer = NULL, *s_time_b_buffer = NULL, *s_time_c_bu
 
 /* A function that prints given number in words */
 /* The first string is not used, it is to make array indexing simple */
-static const char *single_digits[] = { "o'clock", "one", "two", "three", "four",
+static const char *single_digits[] = { "o'clock", "two", "three", "four",
                          "five", "six", "seven", "eight", "nine"};
 /* The first string is not used, it is to make array indexing simple */
 static const char *two_digits_a[] = {"ten", "eleven", "twelve", "thir", "four",
@@ -59,7 +59,7 @@ static void time_update_proc(Layer *layer, GContext *ctx) {
   time_t now = time(NULL);
   struct tm *t = localtime(&now);
   
-  convert_to_words(&s_time_a_buffer, NULL, (t->tm_hour==0) ? 12 : t->tm_hour) ;
+  convert_to_words(&s_time_a_buffer, &s_time_c_buffer, ((t->tm_hour%12)==0) ? 12 : t->tm_hour%12) ;
   text_layer_set_text(s_time_a_label, s_time_a_buffer);
   APP_LOG(APP_LOG_LEVEL_INFO, "%s", s_time_a_buffer);
 
@@ -87,28 +87,28 @@ static void window_load(Window *window) {
   layer_add_child(window_layer, s_time_layer);
   
   //0,0,144,168
-  #define H 30
-  #define LEFT 10
-  #define TOP 20
+  #define H 48
+  #define LEFT 0
+  #define TOP 10
   s_time_a_label = text_layer_create(GRect(LEFT, TOP, 144, H));
   text_layer_set_text(s_time_a_label, s_time_a_buffer);
   text_layer_set_background_color(s_time_a_label, GColorBlack);
   text_layer_set_text_color(s_time_a_label, GColorWhite);
-  text_layer_set_font(s_time_a_label, fonts_get_system_font(FONT_KEY_GOTHIC_28_BOLD)); 
+  text_layer_set_font(s_time_a_label, fonts_get_system_font(FONT_KEY_BITHAM_42_BOLD)); 
   layer_add_child(s_time_layer, text_layer_get_layer(s_time_a_label));
   
-  s_time_b_label = text_layer_create(GRect(LEFT, TOP+H+5, 144, H));
+  s_time_b_label = text_layer_create(GRect(LEFT, TOP+H, 144, H));
   text_layer_set_text(s_time_b_label, s_time_b_buffer);
   text_layer_set_background_color(s_time_b_label, GColorBlack);
   text_layer_set_text_color(s_time_b_label, GColorWhite);
-  text_layer_set_font(s_time_b_label, fonts_get_system_font(FONT_KEY_GOTHIC_28)); 
+  text_layer_set_font(s_time_b_label, fonts_get_system_font(FONT_KEY_BITHAM_42_LIGHT)); 
   layer_add_child(s_time_layer, text_layer_get_layer(s_time_b_label));
   
-  s_time_c_label = text_layer_create(GRect(LEFT, TOP+H+5+H+5, 144, H));
+  s_time_c_label = text_layer_create(GRect(LEFT, TOP+H+H, 144, H));
   text_layer_set_text(s_time_c_label, s_time_c_buffer);
   text_layer_set_background_color(s_time_c_label, GColorBlack);
   text_layer_set_text_color(s_time_c_label, GColorWhite);
-  text_layer_set_font(s_time_c_label, fonts_get_system_font(FONT_KEY_GOTHIC_28)); 
+  text_layer_set_font(s_time_c_label, fonts_get_system_font(FONT_KEY_BITHAM_42_LIGHT)); 
   layer_add_child(s_time_layer, text_layer_get_layer(s_time_c_label));
 }
 
