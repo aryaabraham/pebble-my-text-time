@@ -1,8 +1,8 @@
 {
     "appKeys": {
-        "WEATHER_CITY_KEY": 2,
-        "WEATHER_ICON_KEY": 0,
-        "WEATHER_TEMPERATURE_KEY": 1
+        "KEY_WEATHER_CITY": 2,
+        "KEY_WEATHER_ICON": 0,
+        "KEY_WEATHER_TEMPERATURE": 1
     },
     "capabilities": [
         ""

@@ -22,12 +22,9 @@ static const char *tens_multiple[] = {"", "", "twenty", "thirty", "forty", "fift
 static TextLayer *s_temperature_layer;
 static BitmapLayer *s_icon_layer;
 static GBitmap *s_icon_bitmap = NULL;
-static AppSync s_sync;
-static uint8_t s_sync_buffer[64];
 enum WeatherKey {
-  WEATHER_ICON_KEY = 0x0,         // TUPLE_INT
-  WEATHER_TEMPERATURE_KEY = 0x1,  // TUPLE_CSTRING
-  WEATHER_CITY_KEY = 0x2,         // TUPLE_CSTRING
+  KEY_WEATHER_ICON = 0x0,         
+  KEY_TEMPERATURE = 0x1      
 };
 static const uint32_t WEATHER_ICONS[] = {
   RESOURCE_ID_IMAGE_SUN, //0
@@ -77,53 +74,63 @@ static void time_update_proc(Layer *layer, GContext *ctx) {
   text_layer_set_text(s_time_b_label, s_time_b_buffer);
   text_layer_set_text(s_time_c_label, s_time_c_buffer);
   //APP_LOG(APP_LOG_LEVEL_INFO, "%s %s", s_time_b_buffer, s_time_c_buffer);
+  
+  // Get weather update every 30 minutes
+  if(t->tm_min % 30 == 0) {
+    // Begin dictionary
+    DictionaryIterator *iter;
+    app_message_outbox_begin(&iter);
+  
+    // Add a key-value pair
+    dict_write_uint8(iter, 0, 0);
+  
+    // Send the message!
+    app_message_outbox_send();
+  }
 }
 
-static void sync_error_callback(DictionaryResult dict_error, AppMessageResult app_message_error, void *context) {
-  APP_LOG(APP_LOG_LEVEL_DEBUG, "App Message Sync Error: %d", app_message_error);
+// Weather 
+
+static void inbox_dropped_callback(AppMessageResult reason, void *context) {
+  APP_LOG(APP_LOG_LEVEL_ERROR, "Message dropped!");
+}
+static void outbox_failed_callback(DictionaryIterator *iterator, AppMessageResult reason, void *context) {
+  APP_LOG(APP_LOG_LEVEL_ERROR, "Outbox send failed!");
+}
+static void outbox_sent_callback(DictionaryIterator *iterator, void *context) {
+  APP_LOG(APP_LOG_LEVEL_INFO, "Outbox send success!");
 }
 
-static void sync_tuple_changed_callback(const uint32_t key, const Tuple* new_tuple, const Tuple* old_tuple, void* context) {
-  switch (key) {
-    case WEATHER_ICON_KEY:
+static void inbox_received_callback(DictionaryIterator *iterator, void *context) {
+  // Read first item
+  Tuple *t = dict_read_first(iterator);
+
+  // For all items
+  while(t != NULL) {
+    // Which key was received?
+    switch(t->key) {
+    case KEY_TEMPERATURE:
+      text_layer_set_text(s_temperature_layer, t->value->cstring);
+      break;
+      
+    case KEY_WEATHER_ICON:
       if (s_icon_bitmap) {
         gbitmap_destroy(s_icon_bitmap);
       }
-
-      s_icon_bitmap = gbitmap_create_with_resource(WEATHER_ICONS[new_tuple->value->uint8]);
-
+      s_icon_bitmap = gbitmap_create_with_resource(WEATHER_ICONS[t->value->uint8]);
 #ifdef PBL_SDK_3
       bitmap_layer_set_compositing_mode(s_icon_layer, GCompOpSet);
 #endif
-      
       bitmap_layer_set_bitmap(s_icon_layer, s_icon_bitmap);
       break;
-
-    case WEATHER_TEMPERATURE_KEY:
-      // App Sync keeps new_tuple in s_sync_buffer, so we may use it directly
-      text_layer_set_text(s_temperature_layer, new_tuple->value->cstring);
+    default:
+      APP_LOG(APP_LOG_LEVEL_ERROR, "Key %d not recognized!", (int)t->key);
       break;
+    }
 
-    case WEATHER_CITY_KEY:
-      //text_layer_set_text(s_city_layer, new_tuple->value->cstring);
-      break;
+    // Look for next item
+    t = dict_read_next(iterator);
   }
-}
-
-static void request_weather(void) {
-  DictionaryIterator *iter;
-  app_message_outbox_begin(&iter);
-
-  if (!iter) {
-    // Error creating outbound message
-    return;
-  }
-
-  int value = 1;
-  dict_write_int(iter, 1, &value, sizeof(int), true);
-  dict_write_end(iter);
-
-  app_message_outbox_send();
 }
 
 static void bg_update_proc(Layer *layer, GContext *ctx) {
@@ -153,7 +160,7 @@ static void window_load(Window *window) {
   //0,0,144,168
   #define H 46
   #define LEFT 0
-  #define TOP 10
+  #define TOP 0
   s_time_a_label = text_layer_create(GRect(LEFT, TOP, 144, H));
   text_layer_set_text(s_time_a_label, s_time_a_buffer);
   text_layer_set_background_color(s_time_a_label, GColorBlack);
@@ -185,20 +192,6 @@ static void window_load(Window *window) {
   text_layer_set_font(s_temperature_layer, fonts_get_system_font(FONT_KEY_GOTHIC_18));
   text_layer_set_text_alignment(s_temperature_layer, GTextAlignmentRight);
   layer_add_child(window_layer, text_layer_get_layer(s_temperature_layer));
-  
-  // Weather
-  Tuplet initial_values[] = {
-    TupletInteger(WEATHER_ICON_KEY, (uint8_t) 1),
-    TupletCString(WEATHER_TEMPERATURE_KEY, "12\u00B0F"),
-    TupletCString(WEATHER_CITY_KEY, "St Pebblesburg"),
-  };
-
-  app_sync_init(&s_sync, s_sync_buffer, sizeof(s_sync_buffer), 
-      initial_values, ARRAY_LENGTH(initial_values),
-      sync_tuple_changed_callback, sync_error_callback, NULL
-  );
-
-  request_weather();
 }
 
 static void window_unload(Window *window) {
@@ -228,15 +221,16 @@ static void init() {
   tick_timer_service_subscribe(MINUTE_UNIT, handle_minute_tick);
   
   // Weather
-  app_message_open(64, 64);
+  app_message_register_inbox_received(inbox_received_callback);
+  app_message_register_inbox_dropped(inbox_dropped_callback);
+  app_message_register_outbox_failed(outbox_failed_callback);
+  app_message_register_outbox_sent(outbox_sent_callback);
+  app_message_open(app_message_inbox_size_maximum(), app_message_outbox_size_maximum());
 }
 
 static void deinit() {
   tick_timer_service_unsubscribe();
   window_destroy(window);
-  
-  // Weather
-  app_sync_deinit(&s_sync);
 }
 
 int main() {
