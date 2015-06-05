@@ -11,7 +11,7 @@ static const char *s_time_a_buffer = NULL, *s_time_b_buffer = NULL, *s_time_c_bu
 
 /* A function that prints given number in words */
 /* The first string is not used, it is to make array indexing simple */
-static const char *single_digits[] = { "o'clock", "two", "three", "four",
+static const char *single_digits[] = { "o'clock", "one", "two", "three", "four",
                          "five", "six", "seven", "eight", "nine"};
 /* The first string is not used, it is to make array indexing simple */
 static const char *two_digits_a[] = {"ten", "eleven", "twelve", "thir", "four",
@@ -61,12 +61,12 @@ static void time_update_proc(Layer *layer, GContext *ctx) {
   
   convert_to_words(&s_time_a_buffer, &s_time_c_buffer, ((t->tm_hour%12)==0) ? 12 : t->tm_hour%12) ;
   text_layer_set_text(s_time_a_label, s_time_a_buffer);
-  APP_LOG(APP_LOG_LEVEL_INFO, "%s", s_time_a_buffer);
+  //APP_LOG(APP_LOG_LEVEL_INFO, "%s", s_time_a_buffer);
 
   convert_to_words(&s_time_b_buffer, &s_time_c_buffer, t->tm_min);
   text_layer_set_text(s_time_b_label, s_time_b_buffer);
   text_layer_set_text(s_time_c_label, s_time_c_buffer);
-  APP_LOG(APP_LOG_LEVEL_INFO, "%s %s", s_time_b_buffer, s_time_c_buffer);
+  //APP_LOG(APP_LOG_LEVEL_INFO, "%s %s", s_time_b_buffer, s_time_c_buffer);
 }
 
 static void handle_minute_tick(struct tm *tick_time, TimeUnits units_changed) {
@@ -87,7 +87,7 @@ static void window_load(Window *window) {
   layer_add_child(window_layer, s_time_layer);
   
   //0,0,144,168
-  #define H 48
+  #define H 46
   #define LEFT 0
   #define TOP 10
   s_time_a_label = text_layer_create(GRect(LEFT, TOP, 144, H));
