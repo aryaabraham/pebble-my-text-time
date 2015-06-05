@@ -74,19 +74,6 @@ static void time_update_proc(Layer *layer, GContext *ctx) {
   text_layer_set_text(s_time_b_label, s_time_b_buffer);
   text_layer_set_text(s_time_c_label, s_time_c_buffer);
   //APP_LOG(APP_LOG_LEVEL_INFO, "%s %s", s_time_b_buffer, s_time_c_buffer);
-  
-  // Get weather update every 30 minutes
-  if(t->tm_min % 30 == 0) {
-    // Begin dictionary
-    DictionaryIterator *iter;
-    app_message_outbox_begin(&iter);
-  
-    // Add a key-value pair
-    dict_write_uint8(iter, 0, 0);
-  
-    // Send the message!
-    app_message_outbox_send();
-  }
 }
 
 // Weather 
@@ -140,6 +127,19 @@ static void bg_update_proc(Layer *layer, GContext *ctx) {
 }
 
 static void handle_minute_tick(struct tm *tick_time, TimeUnits units_changed) {
+  // Get weather update every 30 minutes
+  if(tick_time->tm_min % 30 == 0) {
+    // Begin dictionary
+    DictionaryIterator *iter;
+    app_message_outbox_begin(&iter);
+  
+    // Add a key-value pair
+    dict_write_uint8(iter, 0, 0);
+  
+    // Send the message!
+    app_message_outbox_send();
+  }
+  
   layer_mark_dirty(window_get_root_layer(window));
 }
 
