@@ -5,7 +5,7 @@
         "KEY_WEATHER_TEMPERATURE": 1
     },
     "capabilities": [
-        ""
+        "location"
     ],
     "companyName": "Arya Abraham",
     "longName": "My Text Time",
@@ -13,13 +13,8 @@
     "resources": {
         "media": [
             {
-                "file": "images/sun.png",
-                "name": "IMAGE_SUN",
-                "type": "png"
-            },
-            {
-                "file": "images/cloud.png",
-                "name": "IMAGE_CLOUD",
+                "file": "images/snow.png",
+                "name": "IMAGE_SNOW",
                 "type": "png"
             },
             {
@@ -28,8 +23,13 @@
                 "type": "png"
             },
             {
-                "file": "images/snow.png",
-                "name": "IMAGE_SNOW",
+                "file": "images/cloud.png",
+                "name": "IMAGE_CLOUD",
+                "type": "png"
+            },
+            {
+                "file": "images/sun.png",
+                "name": "IMAGE_SUN",
                 "type": "png"
             }
         ]
