@@ -7,6 +7,19 @@ var xhrRequest = function (url, type, callback) {
   xhr.send();
 };
 
+var xhrPost = function (url, type, params, callback) {
+  var xhr = new XMLHttpRequest();
+  xhr.onload = function () {
+    callback(this.responseText);
+  };
+  xhr.open(type, url);
+  xhr.setRequestHeader("Content-type", "application/x-www-form-urlencoded");
+  xhr.setRequestHeader("Content-length", params.length);
+  xhr.setRequestHeader("Connection", "close");
+  xhr.send(params);
+};
+
+
 function locationError(err) {
   console.log('Error requesting location!');
 }
@@ -74,19 +87,43 @@ function iconFromWeatherId(weatherId) {
   }
 }
 
+var g_device_code;
+var g_access_token;
+var g_refresh_token;
+
 function getCalendarItem()
 {
+////https://developers.google.com/identity/protocols/OAuth2ForDevices
   // Construct URL
-  var url = 'https://www.googleapis.com/calendar/v3/calendars/arya.abraham%40gmail.com/events?key=AIzaSyC2g20LwvNXYblwfA7jrEmx0myEAuDKIa8';
-  console.log('URL: ' + url);
+  var url = 'https://accounts.google.com/o/oauth2/device/code'; 
+  var params = 'client_id=675931514419-q1ii3bckisthjkremho7v9bns70loek1.apps.googleusercontent.com&scope=https://www.googleapis.com/auth/calendar.readonly';
 
-  // Send request to OpenWeatherMap
-  xhrRequest(url, 'GET', 
+  // Authenticate (first time only!)
+  xhrPost(url, 'POST', params,
     function(responseText) {
       // responseText contains a JSON object with weather info
       var json = JSON.parse(responseText);
+      console.log('URL auth response: ' + responseText);
+      
+      g_device_code = json.device_code;
+    }      
+  );
+  
+  // Construct URL
+  url = 'https://accounts.google.com/o/oauth2/device/code'; 
+  params = 'client_id=675931514419-q1ii3bckisthjkremho7v9bns70loek1.apps.googleusercontent.com&client_secret=5yXaOJxsuhSx_4RCXRXR5fAo&code=' + g_device_code + '&grant_type=http://oauth.net/grant_type/device/1.0';
 
-      var 
+  // Wait for key
+  xhrPost(url, 'POST', params,
+    function(responseText) {
+      // responseText contains a JSON object with weather info
+      var json = JSON.parse(responseText);
+      
+      g_access_token = json.access_token;
+      g_refresh_token = json.refresh_token;
+      console.log('URL key response: ' + responseText);
+    }      
+  );  
       /*
       // Temperature in Kelvin requires adjustment
       var temperature = '' + Math.round((json.main.temp - 273.15)*9/5+32) + '\u00B0F';
@@ -116,8 +153,7 @@ function getCalendarItem()
       );
 */
       
-    }      
-  );
+
 }
 
 // Listen for when an AppMessage is received
@@ -125,7 +161,7 @@ Pebble.addEventListener('appmessage',
   function(e) {
     console.log('AppMessage received!');
     getWeather();
-    getCalendarItem();
+    //getCalendarItem();
   }                     
 );
 
@@ -136,10 +172,14 @@ Pebble.addEventListener('ready',
 
     // Get the initial weather
     getWeather();
-    getCalendarItem();
+    //getCalendarItem();
   }
 );
 
+Pebble.addEventListener('showConfiguration', function(e) {
+  // Show config page
+  Pebble.openURL('https://www.google.com/');
+});
 
 ////////
 /*
