@@ -5,7 +5,8 @@
         "KEY_WEATHER_TEMPERATURE": 1
     },
     "capabilities": [
-        ""
+        "location",
+        "configurable"
     ],
     "companyName": "Arya Abraham",
     "longName": "My Text Time",
