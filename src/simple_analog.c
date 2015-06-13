@@ -12,7 +12,7 @@ static const char *s_time_a_buffer = NULL, *s_time_b_buffer = NULL, *s_time_c_bu
 static const char *single_digits[] = { "o'clock", "one", "two", "three", "four",
                          "five", "six", "seven", "eight", "nine"};
 static const char *two_digits_a[] = {"ten", "eleven", "twelve", "thir", "four",
-                      "fifteen", "sixteen", "seven", "eigh", "nine"};
+                      "fifteen", "sixteen", "seven", "eight", "nine"};
 static const char *two_digits_b[] = {"", "", "", "teen", "teen",
                       "", "", "teen", "teen", "teen"};
 static const char *tens_multiple[] = {"", "", "twenty", "thirty", "forty", "fifty",
@@ -32,7 +32,14 @@ static const uint32_t WEATHER_ICONS[] = {
   RESOURCE_ID_IMAGE_RAIN, //2
   RESOURCE_ID_IMAGE_SNOW //3
 };
+static char TxtTemperature[10];
 
+// Calendar Data
+static TextLayer *s_calendar_layer;
+static char TxtCalendarEntry[100];
+enum CalendarKey {
+  KEY_CALENDAR_SUMMARY = 0x3,           
+};
 // Text Time Code
 static void convert_to_words(const char **str_top, const char **str_bot, int num)
 {
@@ -91,13 +98,14 @@ static void outbox_sent_callback(DictionaryIterator *iterator, void *context) {
 static void inbox_received_callback(DictionaryIterator *iterator, void *context) {
   // Read first item
   Tuple *t = dict_read_first(iterator);
-
+  
   // For all items
   while(t != NULL) {
     // Which key was received?
     switch(t->key) {
     case KEY_TEMPERATURE:
-      text_layer_set_text(s_temperature_layer, t->value->cstring);
+      strncpy(TxtTemperature, t->value->cstring, sizeof(TxtTemperature));
+      text_layer_set_text(s_temperature_layer, TxtTemperature);
       break;
       
     case KEY_WEATHER_ICON:
@@ -110,6 +118,12 @@ static void inbox_received_callback(DictionaryIterator *iterator, void *context)
 #endif
       bitmap_layer_set_bitmap(s_icon_layer, s_icon_bitmap);
       break;
+      
+    case KEY_CALENDAR_SUMMARY:
+      strncpy(TxtCalendarEntry, t->value->cstring, sizeof(TxtCalendarEntry));
+      text_layer_set_text(s_calendar_layer, TxtCalendarEntry);
+      break;
+      
     default:
       APP_LOG(APP_LOG_LEVEL_ERROR, "Key %d not recognized!", (int)t->key);
       break;
@@ -161,37 +175,47 @@ static void window_load(Window *window) {
   #define H 46
   #define LEFT 0
   #define TOP 0
-  s_time_a_label = text_layer_create(GRect(LEFT, TOP, 144, H));
-  text_layer_set_text(s_time_a_label, s_time_a_buffer);
-  text_layer_set_background_color(s_time_a_label, GColorBlack);
-  text_layer_set_text_color(s_time_a_label, GColorWhite);
-  text_layer_set_font(s_time_a_label, fonts_get_system_font(FONT_KEY_BITHAM_42_BOLD)); 
-  layer_add_child(s_time_layer, text_layer_get_layer(s_time_a_label));
-  
-  s_time_b_label = text_layer_create(GRect(LEFT, TOP+H, 144, H));
+  s_time_c_label = text_layer_create(GRect(LEFT, TOP+H+H-20, 144, H));
+  text_layer_set_text(s_time_c_label, s_time_c_buffer);
+  text_layer_set_background_color(s_time_c_label, GColorBlack);
+  text_layer_set_text_color(s_time_c_label, GColorWhite);
+  text_layer_set_font(s_time_c_label, fonts_get_system_font(FONT_KEY_BITHAM_42_LIGHT)); 
+  layer_add_child(s_time_layer, text_layer_get_layer(s_time_c_label));
+
+  s_time_b_label = text_layer_create(GRect(LEFT, TOP+H-10, 144, H));
   text_layer_set_text(s_time_b_label, s_time_b_buffer);
   text_layer_set_background_color(s_time_b_label, GColorBlack);
   text_layer_set_text_color(s_time_b_label, GColorWhite);
   text_layer_set_font(s_time_b_label, fonts_get_system_font(FONT_KEY_BITHAM_42_LIGHT)); 
   layer_add_child(s_time_layer, text_layer_get_layer(s_time_b_label));
   
-  s_time_c_label = text_layer_create(GRect(LEFT, TOP+H+H, 144, H));
-  text_layer_set_text(s_time_c_label, s_time_c_buffer);
-  text_layer_set_background_color(s_time_c_label, GColorBlack);
-  text_layer_set_text_color(s_time_c_label, GColorWhite);
-  text_layer_set_font(s_time_c_label, fonts_get_system_font(FONT_KEY_BITHAM_42_LIGHT)); 
-  layer_add_child(s_time_layer, text_layer_get_layer(s_time_c_label));
-  
+  s_time_a_label = text_layer_create(GRect(LEFT, TOP, 144, H));
+  text_layer_set_text(s_time_a_label, s_time_a_buffer);
+  text_layer_set_background_color(s_time_a_label, GColorBlack);
+  text_layer_set_text_color(s_time_a_label, GColorWhite);
+  text_layer_set_font(s_time_a_label, fonts_get_system_font(FONT_KEY_BITHAM_42_BOLD)); 
+  layer_add_child(s_time_layer, text_layer_get_layer(s_time_a_label));
+    
   // Weather
-  s_icon_layer = bitmap_layer_create(GRect(124, 144, 20, 20));
+//  s_icon_layer = bitmap_layer_create(GRect(124, 144, 20, 20));
+  s_icon_layer = bitmap_layer_create(GRect(124, 124, 20, 20));
   layer_add_child(window_layer, bitmap_layer_get_layer(s_icon_layer));
 
-  s_temperature_layer = text_layer_create(GRect(80, 142, 44, 20));
+//  s_temperature_layer = text_layer_create(GRect(95, 142, 29, 20));
+  s_temperature_layer = text_layer_create(GRect(95, 122, 29, 20));
   text_layer_set_text_color(s_temperature_layer, COLOR_FALLBACK(GColorBlack, GColorWhite));
   text_layer_set_background_color(s_temperature_layer, GColorClear);
   text_layer_set_font(s_temperature_layer, fonts_get_system_font(FONT_KEY_GOTHIC_18));
   text_layer_set_text_alignment(s_temperature_layer, GTextAlignmentRight);
   layer_add_child(window_layer, text_layer_get_layer(s_temperature_layer));
+  
+  // Calendar
+//  s_calendar_layer = text_layer_create(GRect(LEFT, 122, 168, 20));
+  s_calendar_layer = text_layer_create(GRect(LEFT, 144, 168, 20));
+  text_layer_set_text_color(s_calendar_layer, COLOR_FALLBACK(GColorBlack, GColorWhite));
+  text_layer_set_background_color(s_calendar_layer, GColorClear);
+  text_layer_set_font(s_calendar_layer, fonts_get_system_font(FONT_KEY_GOTHIC_18));
+  layer_add_child(window_layer, text_layer_get_layer(s_calendar_layer));
 }
 
 static void window_unload(Window *window) {
@@ -207,6 +231,7 @@ static void window_unload(Window *window) {
   }
   bitmap_layer_destroy(s_icon_layer);
   text_layer_destroy(s_temperature_layer);
+  text_layer_destroy(s_calendar_layer);
 }
 
 static void init() {

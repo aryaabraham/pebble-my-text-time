@@ -1,5 +1,6 @@
 {
     "appKeys": {
+        "KEY_CALENDAR_SUMMARY": 3,
         "KEY_WEATHER_CITY": 2,
         "KEY_WEATHER_ICON": 0,
         "KEY_WEATHER_TEMPERATURE": 1
