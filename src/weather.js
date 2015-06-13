@@ -1,18 +1,3 @@
-// Listen for when the watchface is opened
-Pebble.addEventListener('ready', 
-  function(e) {
-    console.log('PebbleKit JS ready!');
-  }
-);
-
-// Listen for when an AppMessage is received
-Pebble.addEventListener('appmessage',
-  function(e) {
-    console.log('AppMessage received!');
-    getWeather();
-  }                     
-);
-
 var xhrRequest = function (url, type, callback) {
   var xhr = new XMLHttpRequest();
   xhr.onload = function () {
@@ -21,6 +6,19 @@ var xhrRequest = function (url, type, callback) {
   xhr.open(type, url);
   xhr.send();
 };
+
+var xhrPost = function (url, type, params, callback) {
+  var xhr = new XMLHttpRequest();
+  xhr.onload = function () {
+    callback(this.responseText);
+  };
+  xhr.open(type, url);
+  xhr.setRequestHeader("Content-type", "application/x-www-form-urlencoded");
+  xhr.setRequestHeader("Content-length", params.length);
+  xhr.setRequestHeader("Connection", "close");
+  xhr.send(params);
+};
+
 
 function locationError(err) {
   console.log('Error requesting location!');
@@ -34,16 +32,6 @@ function getWeather() {
   );
 }
 
-// Listen for when the watchface is opened
-Pebble.addEventListener('ready', 
-  function(e) {
-    console.log('PebbleKit JS ready!');
-
-    // Get the initial weather
-    getWeather();
-  }
-);
-
 function locationSuccess(pos) {
   // Construct URL
   var url = 'http://api.openweathermap.org/data/2.5/weather?lat=' +
@@ -54,7 +42,8 @@ function locationSuccess(pos) {
     function(responseText) {
       // responseText contains a JSON object with weather info
       var json = JSON.parse(responseText);
-
+      console.log(responseText);
+      
       // Temperature in Kelvin requires adjustment
       var temperature = '' + Math.round((json.main.temp - 273.15)*9/5+32) + '\u00B0F';
       console.log('Temperature is ' + temperature);
@@ -82,6 +71,7 @@ function locationSuccess(pos) {
         }
       );
 
+      
     }      
   );
 }
@@ -97,3 +87,84 @@ function iconFromWeatherId(weatherId) {
     return 0; //SUNNY
   }
 }
+
+function getCalendarItem() {
+  // Get persistent data
+  var google_access_token = localStorage.getItem(1);
+  
+  var now = new Date(Date.now());
+  var nowplus1day = new Date(Date.now()+(24*60*60*1000));  // one day later
+  
+  // Construct URL
+  var url = 'https://www.googleapis.com/calendar/v3/calendars/primary/events?fields=items(summary%2Cstart)&showDeleted=false&maxResults=100&singleEvents=true&timeMin=' + now.toISOString() + '&timeMax=' + nowplus1day.toISOString() + '&access_token=' + encodeURIComponent(google_access_token);
+  //console.log(url);
+  
+  // Send request to Google API
+  xhrRequest(url, 'GET', 
+    function(responseText) {
+      // responseText contains a JSON object with weather info
+      var json = JSON.parse(responseText);
+      //console.log(responseText);
+      json.items.sort(function(a, b){return Date.parse(a.start.dateTime)-Date.parse(b.start.dateTime);});
+      //console.log(JSON.stringify(json));
+      
+      // Get the summary, description and date time
+      var start = new Date(json.items[0].start.dateTime);
+      var summary = start.getHours() + ':' + start.getMinutes() + '-' + json.items[0].summary;
+      console.log('Next calendar event: ' + summary);
+
+      // Assemble dictionary using our keys
+      var dictionary = {
+        'KEY_CALENDAR_SUMMARY': summary,
+      };
+        
+      // Send to Pebble
+      Pebble.sendAppMessage(dictionary,
+                            function(e) {
+                              console.log('Calendar info sent to Pebble successfully!');
+                            },
+                            function(e) {
+                              console.log('Error sending calendar info to Pebble!');
+                            }
+                           );
+
+    }      
+  );
+}
+
+// Listen for when an AppMessage is received
+Pebble.addEventListener('appmessage',
+  function(e) {
+    console.log('AppMessage received!');
+    getWeather();
+    getCalendarItem();
+  }                     
+);
+
+// Listen for when the watchface is opened
+Pebble.addEventListener('ready', 
+  function(e) {
+    console.log('PebbleKit JS ready!');
+    // Get the initial weather
+    getWeather();
+    getCalendarItem();
+  }
+);
+
+Pebble.addEventListener('showConfiguration', 
+  function(e) {
+    // Show config page
+    Pebble.openURL('http://www.aryaservices.website/pebbletexttime.htm');
+  }
+);
+
+Pebble.addEventListener('webviewclosed',
+  function(e) {
+    //console.log('Configuration window returned: ' + e.response);
+    var json = JSON.parse(e.response);
+    var google_access_token = json.access_token;
+    localStorage.setItem(1, google_access_token);
+    console.log('New access token: ' + google_access_token);
+    getCalendarItem();
+  }
+);

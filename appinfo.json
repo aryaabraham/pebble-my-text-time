@@ -1,5 +1,6 @@
 {
     "appKeys": {
+        "KEY_CALENDAR_SUMMARY": 3,
         "KEY_WEATHER_CITY": 2,
         "KEY_WEATHER_ICON": 0,
         "KEY_WEATHER_TEMPERATURE": 1
@@ -14,13 +15,8 @@
     "resources": {
         "media": [
             {
-                "file": "images/sun.png",
-                "name": "IMAGE_SUN",
-                "type": "png"
-            },
-            {
-                "file": "images/cloud.png",
-                "name": "IMAGE_CLOUD",
+                "file": "images/snow.png",
+                "name": "IMAGE_SNOW",
                 "type": "png"
             },
             {
@@ -29,8 +25,13 @@
                 "type": "png"
             },
             {
-                "file": "images/snow.png",
-                "name": "IMAGE_SNOW",
+                "file": "images/cloud.png",
+                "name": "IMAGE_CLOUD",
+                "type": "png"
+            },
+            {
+                "file": "images/sun.png",
+                "name": "IMAGE_SUN",
                 "type": "png"
             }
         ]
