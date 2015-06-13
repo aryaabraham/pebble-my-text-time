@@ -141,8 +141,8 @@ static void bg_update_proc(Layer *layer, GContext *ctx) {
 }
 
 static void handle_minute_tick(struct tm *tick_time, TimeUnits units_changed) {
-  // Get weather update every 30 minutes
-  if(tick_time->tm_min % 30 == 0) {
+  // Get weather update every 15 minutes
+  if(tick_time->tm_min % 15 == 0) {
     // Begin dictionary
     DictionaryIterator *iter;
     app_message_outbox_begin(&iter);
